@@ -16,10 +16,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.AlignmentLine
-import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.WithConstraints
+import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -82,7 +81,7 @@ fun BodyContent(modifier: Modifier = Modifier){
 fun StaggeredGrid(
     modifier: Modifier = Modifier,
     rows: Int = 3,
-    children: @Composable() () -> Unit
+    children: @Composable () -> Unit
 ){
     Layout(modifier = modifier, children = children){ measurables, constraints ->
         val rowWidths = IntArray(rows) { 0 }
@@ -141,6 +140,143 @@ fun Chip(modifier: Modifier = Modifier, text: String){
     }
 }
 
+@Composable
+fun ConstraintLayoutContent(){
+    ConstraintLayout {
+        val (button, text) = createRefs()
+        
+        Button(
+            onClick = {},
+            modifier = Modifier.constrainAs(button){
+                top.linkTo(parent.top, margin = 16.dp)
+            }
+        ) {
+            Text("Button")
+        }
+        Text(
+            text = "Text",
+            modifier = Modifier.constrainAs(text){
+                top.linkTo(button.bottom, margin = 16.dp)
+                centerHorizontallyTo(parent)
+            }
+        )
+    }
+}
+
+@Composable
+fun ConstraintLayoutBarrierContent(){
+    ConstraintLayout {
+        val (button1, button2, text) = createRefs()
+
+        Button(
+            onClick = {},
+            modifier = Modifier.constrainAs(button1){
+                top.linkTo(parent.top, margin = 16.dp)
+            }
+        ) {
+            Text(text = "Button 1")
+        }
+        Text(
+                text = "Text",
+                modifier = Modifier.constrainAs(text) {
+                    top.linkTo(button1.bottom, margin = 16.dp)
+                    centerAround(button1.end)
+                }
+        )
+
+        val barrier = createEndBarrier(button1, text)
+        Button(
+                onClick = {},
+                modifier = Modifier.constrainAs(button2){
+                    top.linkTo(parent.top, margin = 16.dp)
+                    start.linkTo(barrier)
+                }
+        ) {
+            Text(text = "Button 2")
+        }
+    }
+}
+
+@Composable
+fun DecoupledConstraintContent(){
+    WithConstraints {
+        val constraints = if(maxWidth < maxHeight){
+            decoupledConstraints(margin = 16.dp)
+        }else{
+            decoupledConstraints(margin = 32.dp)
+        }
+
+        ConstraintLayout(constraints) {
+            Button(onClick = {}, Modifier.layoutId("button")) {
+                Text("Text")
+            }
+            Text(text = "Text", Modifier.layoutId("text"))
+        }
+    }
+}
+
+@Preview
+@Composable
+fun DecoupledConstraintPreview(){
+    MaterialTheme {
+        DecoupledConstraintContent()
+    }
+}
+
+@Composable
+fun ConstraintDimensionsContent(){
+    ConstraintLayout {
+        val text = createRef()
+        val guideline = createGuidelineFromStart(fraction = 0.5f)
+        Text(
+            text = "This is very very very very very very very very long text",
+            modifier = Modifier.constrainAs(text){
+                linkTo(start = guideline, end = parent.end)
+                width = Dimension.preferredWrapContent
+            }
+        )
+    }
+}
+
+private fun decoupledConstraints(margin: Dp): ConstraintSet{
+    return ConstraintSet{
+        val button = createRefFor("button")
+        val text = createRefFor("text")
+
+        constrain(button){
+            top.linkTo(parent.top, margin)
+        }
+        constrain(text){
+            top.linkTo(button.bottom, margin)
+        }
+    }
+}
+
+@Preview
+@Composable
+fun ConstraintDimensionsPreview(){
+    MaterialComponentsTheme {
+        ConstraintDimensionsContent()
+    }
+}
+
+@Preview
+@Composable
+fun ConstraintPreview(){
+    MaterialComponentsTheme {
+        ConstraintLayoutContent()
+    }
+}
+
+@Preview
+@Composable
+fun ConstraintBarrierPreview(){
+    MaterialComponentsTheme {
+        ConstraintLayoutBarrierContent()
+    }
+}
+
+
 /*@Preview
 @Composable
 fun ChipPreview(){
@@ -149,7 +285,7 @@ fun ChipPreview(){
     }
 }*/
 
-fun Modifier.firstBaselineToTop(
+/*fun Modifier.firstBaselineToTop(
     firstBaselineToTop: Dp
 ) = Modifier.layout { measurable, constraints ->
     val placeable = measurable.measure(constraints)
@@ -160,9 +296,9 @@ fun Modifier.firstBaselineToTop(
     layout(placeable.width, height){
         placeable.placeRelative(0, placeableY)
     }
-}
+}*/
 
-@Composable
+/*@Composable
 fun MyOwnColumn(
     modifier: Modifier = Modifier,
     children: @Composable () -> Unit
@@ -184,7 +320,7 @@ fun MyOwnColumn(
             }
         }
     }
-}
+}*/
 
 /*@Preview
 @Composable
