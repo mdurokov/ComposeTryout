@@ -16,9 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.layout.WithConstraints
-import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.layout.*
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -44,6 +42,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 }
+
+// LAYOUTS
 
 @Composable
 fun LayoutsCodelab() {
@@ -79,9 +79,9 @@ fun BodyContent(modifier: Modifier = Modifier){
 
 @Composable
 fun StaggeredGrid(
-    modifier: Modifier = Modifier,
-    rows: Int = 3,
-    children: @Composable () -> Unit
+        modifier: Modifier = Modifier,
+        rows: Int = 3,
+        children: @Composable () -> Unit
 ){
     Layout(modifier = modifier, children = children){ measurables, constraints ->
         val rowWidths = IntArray(rows) { 0 }
@@ -110,8 +110,8 @@ fun StaggeredGrid(
             placeables.forEachIndexed{ index, placeable ->
                 val row = index % rows
                 placeable.placeRelative(
-                    x = rowX[row],
-                    y = rowY[row]
+                        x = rowX[row],
+                        y = rowY[row]
                 )
                 rowX[row] += placeable.width
             }
@@ -119,26 +119,118 @@ fun StaggeredGrid(
     }
 }
 
+
+@Preview
+@Composable
+fun LayoutsCodelabPreview () {
+    MaterialComponentsTheme {
+        LayoutsCodelab()
+    }
+}
+
 @Composable
 fun Chip(modifier: Modifier = Modifier, text: String){
     Card(
-        modifier = modifier,
-        border = BorderStroke(color = Color.Black, width = Dp.Hairline),
-        shape = RoundedCornerShape(8.dp)
+            modifier = modifier,
+            border = BorderStroke(color = Color.Black, width = Dp.Hairline),
+            shape = RoundedCornerShape(8.dp)
     ) {
         Row(
-            modifier = Modifier.padding(start = 8.dp, top = 4.dp, end = 8.dp, bottom = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.padding(start = 8.dp, top = 4.dp, end = 8.dp, bottom = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
-                modifier = Modifier.preferredSize(16.dp, 16.dp)
-                    .background(color = MaterialTheme.colors.secondary)
+                    modifier = Modifier.preferredSize(16.dp, 16.dp)
+                            .background(color = MaterialTheme.colors.secondary)
             )
             Spacer(modifier = Modifier.preferredWidth(4.dp))
             Text(text)
         }
     }
 }
+
+@Preview
+@Composable
+fun ChipPreview(){
+    MaterialComponentsTheme {
+        Chip(text = "Hi Codelab!")
+    }
+}
+
+
+// CUSTOM COLUMN
+
+@Composable
+fun MyOwnColumn(
+        modifier: Modifier = Modifier,
+        children: @Composable () -> Unit
+) {
+    Layout(
+            modifier = modifier,
+            children = children,
+    ) { measurables, constraints ->
+        val placeables = measurables.map {measurable ->
+            measurable.measure(constraints)
+        }
+
+        var yPosition = 0
+
+        layout(constraints.maxWidth, constraints.maxHeight){
+            placeables.forEach{placeable ->
+                placeable.placeRelative(x = 0, y = yPosition)
+                yPosition += placeable.height
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun MyOwnColumn() {
+    MaterialComponentsTheme {
+        MyOwnColumn() {
+            Text(text = "Text 1")
+            Text(text = "Text 2")
+            Text(text = "Text 3")
+        }
+    }
+}
+
+
+
+// CUSTOM MODIFIER
+
+fun Modifier.firstBaselineToTop(
+        firstBaselineToTop: Dp
+) = Modifier.layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints)
+    check(placeable[FirstBaseline] != AlignmentLine.Unspecified)
+    val firstBaseline = placeable[FirstBaseline]
+    val placeableY = firstBaselineToTop.toIntPx() - firstBaseline
+    val height = placeable.height + placeableY
+    layout(placeable.width, height){
+        placeable.placeRelative(0, placeableY)
+    }
+}
+
+@Preview
+@Composable
+fun TextWithPaddingToBaselinePreview(){
+    MaterialComponentsTheme {
+        Text(text = "Hi there!", Modifier.firstBaselineToTop(32.dp))
+    }
+}
+
+@Preview
+@Composable
+fun TextWithNormalPaddingPreview(){
+    MaterialComponentsTheme {
+        Text(text = "Hi there!", Modifier.padding(32.dp))
+    }
+}
+
+
+// CONSTRAINT LAYOUT
 
 @Composable
 fun ConstraintLayoutContent(){
@@ -276,72 +368,37 @@ fun ConstraintBarrierPreview(){
     }
 }
 
+// INTRINSICS
 
-/*@Preview
+@ExperimentalLayout
 @Composable
-fun ChipPreview(){
-    MaterialComponentsTheme {
-        Chip(text = "Hi Codelab!")
-    }
-}*/
-
-/*fun Modifier.firstBaselineToTop(
-    firstBaselineToTop: Dp
-) = Modifier.layout { measurable, constraints ->
-    val placeable = measurable.measure(constraints)
-    check(placeable[FirstBaseline] != AlignmentLine.Unspecified)
-    val firstBaseline = placeable[FirstBaseline]
-    val placeableY = firstBaselineToTop.toIntPx() - firstBaseline
-    val height = placeable.height + placeableY
-    layout(placeable.width, height){
-        placeable.placeRelative(0, placeableY)
-    }
-}*/
-
-/*@Composable
-fun MyOwnColumn(
-    modifier: Modifier = Modifier,
-    children: @Composable () -> Unit
-) {
-    Layout(
-        modifier = modifier,
-        children = children,
-    ) { measurables, constraints ->
-        val placeables = measurables.map {measurable ->
-            measurable.measure(constraints)
-        }
-
-        var yPosition = 0
-
-        layout(constraints.maxWidth, constraints.maxHeight){
-            placeables.forEach{placeable ->
-                placeable.placeRelative(x = 0, y = yPosition)
-                yPosition += placeable.height
-            }
-        }
-    }
-}*/
-
-/*@Preview
-@Composable
-fun TextWithPaddingToBaselinePreview(){
-    MaterialComponentsTheme {
-        Text(text = "Hi there!", Modifier.firstBaselineToTop(32.dp))
+fun TwoTexts(modifier: Modifier = Modifier, text1: String, text2: String){
+    Row(modifier = modifier.preferredHeight(IntrinsicSize.Min)){
+        Text(
+            modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 4.dp)
+                    .wrapContentWidth(Alignment.Start),
+            text = text1
+        )
+        Divider(color = Color.Black, modifier = Modifier.fillMaxHeight().preferredWidth(1.dp))
+        Text(
+            modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 4.dp)
+                    .wrapContentWidth(Alignment.End),
+            text = text2
+        )
     }
 }
 
+@ExperimentalLayout
 @Preview
 @Composable
-fun TextWithNormalPaddingPreview(){
+fun TwoTextsPreview() {
     MaterialComponentsTheme {
-        Text(text = "Hi there!", Modifier.padding(32.dp))
-    }
-}
-*/
-@Preview
-@Composable
-fun LayoutsCodelabPreview () {
-    MaterialComponentsTheme {
-        LayoutsCodelab()
+        Surface {
+            TwoTexts(text1 = "Hi", text2 = "there")
+        }
     }
 }
